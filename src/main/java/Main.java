@@ -19,7 +19,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import edu.wpi.cscore.MjpegServer;
-import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.AxisCamera;
 import edu.wpi.cscore.VideoSource;
 import edu.wpi.first.cameraserver.CameraServer;
@@ -283,17 +282,17 @@ public final class Main {
     return server;
   }
 
-  /* /**
+  /**
    * Example pipeline.
    */
-  /* public static class Javapipline implements VisionPipeline {
+  public static class MyPipeline implements VisionPipeline {
     public int val;
 
     @Override
     public void process(Mat mat) {
       val += 1;
     }
-  } */ 
+  }
 
   /**
    * Main.
@@ -328,14 +327,11 @@ public final class Main {
       startSwitchedCamera(config);
     }
 
-    System.out.println("Camera sizes" + cameras.size());
     // start image processing on camera 0 if present
     if (cameras.size() >= 1) {
-      System.out.println("CAMERA IS HERE!!");
       VisionThread visionThread = new VisionThread(cameras.get(0),
               new Javapipline(), pipeline -> {
         // do something with pipeline results
-        System.out.print("Val " + pipeline.val);
       });
       /* something like this for GRIP:
       VisionThread visionThread = new VisionThread(cameras.get(0),

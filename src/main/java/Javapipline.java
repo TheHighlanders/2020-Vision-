@@ -1,22 +1,10 @@
-
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.HashMap;
-
-import edu.wpi.first.wpilibj.vision.VisionPipeline;
+import edu.wpi.first.vision.VisionPipeline;
 
 import org.opencv.core.*;
-import org.opencv.core.Core.*;
-import org.opencv.features2d.FeatureDetector;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.*;
-import org.opencv.objdetect.*;
 
 /**
 * JavaGripPipeline class.
@@ -41,7 +29,7 @@ public class Javapipline implements VisionPipeline {
 	 * This is the primary method that runs the entire pipeline and updates the outputs.
 	 */
 	@Override	public void process(Mat source0) {
-        System.out.print("6201 6201 6201 6201");
+        System.out.print("Starting Process.");
 		// Step Blur0:
 		Mat blurInput = source0;
 		BlurType blurType = BlurType.get("Median Filter");
@@ -57,13 +45,18 @@ public class Javapipline implements VisionPipeline {
 
 		// Step Find_Lines0:
 		Mat findLinesInput = rgbThresholdOutput;
+		System.out.print("Find Lines.");
 		findLines(findLinesInput, findLinesOutput);
+		Line line = findLinesOutput.get(0);
+		System.out.print("Starting Process." + line.x1 );
 
 		// Step Filter_Lines0:
+		System.out.print("Filter Lines.");
 		ArrayList<Line> filterLinesLines = findLinesOutput;
 		double filterLinesMinLength = 0.0;
 		double[] filterLinesAngle = {0.0, 360};
 		filterLines(filterLinesLines, filterLinesMinLength, filterLinesAngle, filterLinesOutput);
+		
 
 	}
 
@@ -207,22 +200,29 @@ public class Javapipline implements VisionPipeline {
 	 * @param lineList The output where the lines are stored.
 	 */
 	private void findLines(Mat input, ArrayList<Line> lineList) {
-		final LineSegmentDetector lsd = Imgproc.createLineSegmentDetector();
 		final Mat lines = new Mat();
+		Imgproc.HoughLines(input, lines, 1, 1, 1);
+		
 		lineList.clear();
-		if (input.channels() == 1) {
-			lsd.detect(input, lines);
-		} else {
-			final Mat tmp = new Mat();
-			Imgproc.cvtColor(input, tmp, Imgproc.COLOR_BGR2GRAY);
-			lsd.detect(tmp, lines);
-		}
-		if (!lines.empty()) {
-			for (int i = 0; i < lines.rows(); i++) {
-				lineList.add(new Line(lines.get(i, 0)[0], lines.get(i, 0)[1],
-					lines.get(i, 0)[2], lines.get(i, 0)[3]));
-			}
-		}
+		System.out.println("lines:" + lines.cols());
+		for(int i = 0; i < lines.cols(); i++)
+		{
+			double data[] = lines.get(0,i);
+			double rho1 = data[0];
+			double theta1 = data[1];
+			double cosTheta = Math.cos(theta1);
+			double sinTheta = Math.sin(theta1);
+			double x0 = cosTheta * rho1;
+			double y0 = sinTheta * rho1;
+			lineList.add(new Line(x0 + 10000 * -sinTheta, y0 + 10000 * cosTheta, x0 - 10000 * -sinTheta, y0 - 10000*cosTheta));
+		} 
+		
+		// if (!lines.empty()) {
+		// 	for (int i = 0; i < lines.rows(); i++) {
+		// 		lineList.add(new Line(lines.get(i, 0)[0], lines.get(i, 0)[1],
+		// 			lines.get(i, 0)[2], lines.get(i, 0)[3]));
+		// 	}
+		// }
 	}
 
 	/**
