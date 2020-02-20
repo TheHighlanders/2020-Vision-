@@ -1,7 +1,15 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import edu.wpi.cscore.CvSource;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.vision.VisionPipeline;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.*;
 
 import org.opencv.core.*;
 import org.opencv.imgproc.*;
@@ -13,13 +21,16 @@ import org.opencv.imgproc.*;
 *
 * @author GRIP
 */
-public class Javapipline implements VisionPipeline {
+public class JavaPipeLine implements VisionPipeline {
 
 	//Outputs
 	private Mat blurOutput = new Mat();
 	private Mat rgbThresholdOutput = new Mat();
 	private ArrayList<Line> findLinesOutput = new ArrayList<Line>();
 	private ArrayList<Line> filterLinesOutput = new ArrayList<Line>();
+	private CameraServer inst = CameraServer.getInstance();
+	private CvSource imageOut = inst.putVideo("processed", 160, 120);
+	private double val = 0;
 
 	static {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -29,7 +40,8 @@ public class Javapipline implements VisionPipeline {
 	 * This is the primary method that runs the entire pipeline and updates the outputs.
 	 */
 	@Override	public void process(Mat source0) {
-        System.out.print("Starting Process.");
+		System.out.print("Starting Process.");
+		
 		// Step Blur0:
 		Mat blurInput = source0;
 		BlurType blurType = BlurType.get("Median Filter");
@@ -38,26 +50,17 @@ public class Javapipline implements VisionPipeline {
 
 		// Step RGB_Threshold0:
 		Mat rgbThresholdInput = blurOutput;
-		double[] rgbThresholdRed = {0.0, 255.0};
-		double[] rgbThresholdGreen = {208.67805755395685, 255.0};
+		double[] rgbThresholdRed = {0.0, 150.56313993174058};
+		double[] rgbThresholdGreen = {238.4892086330935, 255.0};
 		double[] rgbThresholdBlue = {0.0, 255.0};
+		SmartDashboard.putNumberArray("Red color", rgbThresholdGreen);
 		rgbThreshold(rgbThresholdInput, rgbThresholdRed, rgbThresholdGreen, rgbThresholdBlue, rgbThresholdOutput);
-
-		// Step Find_Lines0:
-		Mat findLinesInput = rgbThresholdOutput;
-		System.out.print("Find Lines.");
-		findLines(findLinesInput, findLinesOutput);
-		Line line = findLinesOutput.get(0);
-		System.out.print("Starting Process." + line.x1 );
-
-		// Step Filter_Lines0:
-		System.out.print("Filter Lines.");
-		ArrayList<Line> filterLinesLines = findLinesOutput;
-		double filterLinesMinLength = 0.0;
-		double[] filterLinesAngle = {0.0, 360};
-		filterLines(filterLinesLines, filterLinesMinLength, filterLinesAngle, filterLinesOutput);
+		imageOut.putFrame(rgbThresholdOutput);   
 		
-
+		NetworkTableInstance netWorkTable = NetworkTableInstance.getDefault();
+		NetworkTable table = netWorkTable.getTable("Test");
+		NetworkTableEntry testValue = table.getEntry("TestValue");
+		testValue.setDouble(val++);
 	}
 
 	/**
@@ -73,6 +76,7 @@ public class Javapipline implements VisionPipeline {
 	 * @return Mat output from RGB_Threshold.
 	 */
 	public Mat rgbThresholdOutput() {
+		imageOut.putFrame(rgbThresholdOutput());  
 		return rgbThresholdOutput;
 	}
 

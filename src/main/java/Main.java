@@ -21,14 +21,19 @@ import com.google.gson.JsonParser;
 import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.AxisCamera;
 import edu.wpi.cscore.VideoSource;
+import edu.wpi.cscore.CvSource;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.vision.VisionPipeline;
 import edu.wpi.first.vision.VisionThread;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 
+import edu.wpi.cscore.UsbCamera;
 /*
    JSON format:
    {
@@ -96,6 +101,9 @@ public final class Main {
   public static List<VideoSource> cameras = new ArrayList<>();
 
   private Main() {
+
+
+    
   }
 
   /**
@@ -228,16 +236,27 @@ public final class Main {
     return true;
   }
 
+   /** 
+   *  start AxisCamera
+  */
+  public static VideoSource startAxisCamera(String ipAddress)
+  {
+    System.out.println("Starting AxisCamera at" + ipAddress);
+    CameraServer inst = CameraServer.getInstance();
+    AxisCamera camera = inst.addAxisCamera(ipAddress);
+    MjpegServer server = inst.startAutomaticCapture(camera);
+    camera.setConnectionStrategy(VideoSource.ConnectionStrategy.kKeepOpen);
+
+    return camera;
+  }
+
   /**
    * Start running the camera.
    */
   public static VideoSource startCamera(CameraConfig config) {
     System.out.println("Starting camera '" + config.name + "' on " + config.path);
     CameraServer inst = CameraServer.getInstance();
-    //UsbCamera camera = new UsbCamera(config.name, config.path);
-    AxisCamera camera = new AxisCamera(config.name, config.path);
-    inst.addAxisCamera("10.62.1.17");
-
+    UsbCamera camera = new UsbCamera(config.name, config.path);
     MjpegServer server = inst.startAutomaticCapture(camera);
 
     Gson gson = new GsonBuilder().create();
@@ -308,6 +327,7 @@ public final class Main {
     }
 
     // start NetworkTables
+
     NetworkTableInstance ntinst = NetworkTableInstance.getDefault();
     if (server) {
       System.out.println("Setting up NetworkTables server");
@@ -317,28 +337,30 @@ public final class Main {
       ntinst.startClientTeam(team);
     }
 
-    // start cameras
-    for (CameraConfig config : cameraConfigs) {
-      cameras.add(startCamera(config));
-    }
+    // NetworkTableTest m_NetworkTableTest = new NetworkTableTest();
+    // m_NetworkTableTest.Test(); 
 
-    // start switched cameras
-    for (SwitchedCameraConfig config : switchedCameraConfigs) {
-      startSwitchedCamera(config);
-    }
+    // // start cameras
+    // for (CameraConfig config : cameraConfigs) {
+    //   cameras.add(startCamera(config));
+    // }
+
+    // // start switched cameras
+    // for (SwitchedCameraConfig config : switchedCameraConfigs) {
+    //   startSwitchedCamera(config);
+    // }
+
+    // start Axis cameras
+    cameras.add(startAxisCamera("10.62.1.17"));
 
     // start image processing on camera 0 if present
     if (cameras.size() >= 1) {
       VisionThread visionThread = new VisionThread(cameras.get(0),
-              new Javapipline(), pipeline -> {
+              new JavaPipeLine(), pipeline -> {
         // do something with pipeline results
+        
       });
-      /* something like this for GRIP:
-      VisionThread visionThread = new VisionThread(cameras.get(0),
-              new GripPipeline(), pipeline -> {
-        ...
-      });
-       */
+
       visionThread.start();
     }
 
