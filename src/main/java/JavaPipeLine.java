@@ -61,6 +61,17 @@ public class JavaPipeLine implements VisionPipeline {
 		NetworkTable table = netWorkTable.getTable("Test");
 		NetworkTableEntry testValue = table.getEntry("TestValue");
 		testValue.setDouble(val++);
+
+		// for(int i = 0; i < rgbThresholdOutput.cols(); i++){
+		// 	for(int j = 0; j < rgbThresholdOutput.rows(); j++){
+		// 		System.out.print(rgbThresholdOutput.get(j,i));
+		// 		//if(rgbThresholdOutput.get(j,i) == 1.0){
+
+		// 		//}
+		// 	}
+		// }
+
+
 	}
 
 	/**
