@@ -72,30 +72,32 @@ public class JavaPipeLine implements VisionPipeline {
 
 		for(int i = 0; i < rgbThresholdOutput.cols(); i++){
 			for(int j = 0; j < rgbThresholdOutput.rows(); j++){
-				System.out.print(rgbThresholdOutput.get(j,i));
-				if(rgbThresholdOutput.get(j,i) == yes){
+				// System.out.print(rgbThresholdOutput.get(j,i));
+				if(rgbThresholdOutput.get(j,i)[0] == 255.0){
 					sumOfWhiteCol += i;
 					sumOfWhiteRow += j;
 					totalPoints++;
 					
-
 				}
-				else if(rgbThresholdOutput.get(j,i) == no){
-				  
-				} 
-		
 			}
 		}
+
 		int avgCol = (int)(Math.round(sumOfWhiteCol/totalPoints));
 		int avgRow =  (int)(Math.round(sumOfWhiteRow/totalPoints));
-		Mat imageout = rgbThresholdOutput;
-		Imgproc.circle(imageout,new Point(avgRow, avgCol),100, new Scalar(0,0,254),10);
+		Mat imageout = blurOutput;
+		Imgproc.circle(imageout,new Point(avgCol, avgRow),10, new Scalar(0,0,254),2);
 		imageOut.putFrame(imageout);   
+		System.out.println("Center Point: Row: " + avgRow + ", Col: " + avgCol);
 
+		// Add center point to the network tables.
 		NetworkTableEntry ValueMiddleX = table.getEntry("Middle X");
 		NetworkTableEntry ValueMiddleY = table.getEntry("Middle Y");
 		ValueMiddleX.setDouble(avgCol);
 		ValueMiddleY.setDouble(avgRow);
+
+		// Add lowest point of identified target to network tables.
+
+		// Add width/farthest left/farthest right of identified target to network tables.
 
 	}
 
