@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 import edu.wpi.cscore.CvSource;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.vision.VisionPipeline;
@@ -32,6 +33,9 @@ public class JavaPipeLine implements VisionPipeline {
 	private CvSource imageOut = inst.putVideo("processed", 160, 120);
 	private double val = 0;
 
+	double[] yes = {1,1};
+	double[] no = {0,0};
+
 	static {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 	}
@@ -55,22 +59,43 @@ public class JavaPipeLine implements VisionPipeline {
 		double[] rgbThresholdBlue = {0.0, 255.0};
 		SmartDashboard.putNumberArray("Red color", rgbThresholdGreen);
 		rgbThreshold(rgbThresholdInput, rgbThresholdRed, rgbThresholdGreen, rgbThresholdBlue, rgbThresholdOutput);
-		imageOut.putFrame(rgbThresholdOutput);   
+		//imageOut.putFrame(rgbThresholdOutput);   
 		
 		NetworkTableInstance netWorkTable = NetworkTableInstance.getDefault();
 		NetworkTable table = netWorkTable.getTable("Test");
 		NetworkTableEntry testValue = table.getEntry("TestValue");
 		testValue.setDouble(val++);
 
-		// for(int i = 0; i < rgbThresholdOutput.cols(); i++){
-		// 	for(int j = 0; j < rgbThresholdOutput.rows(); j++){
-		// 		System.out.print(rgbThresholdOutput.get(j,i));
-		// 		//if(rgbThresholdOutput.get(j,i) == 1.0){
+		double totalPoints = 0;
+		double sumOfWhiteCol = 0;
+		double sumOfWhiteRow = 0;
 
-		// 		//}
-		// 	}
-		// }
+		for(int i = 0; i < rgbThresholdOutput.cols(); i++){
+			for(int j = 0; j < rgbThresholdOutput.rows(); j++){
+				System.out.print(rgbThresholdOutput.get(j,i));
+				if(rgbThresholdOutput.get(j,i) == yes){
+					sumOfWhiteCol += i;
+					sumOfWhiteRow += j;
+					totalPoints++;
+					
 
+				}
+				else if(rgbThresholdOutput.get(j,i) == no){
+				  
+				} 
+		
+			}
+		}
+		int avgCol = (int)(Math.round(sumOfWhiteCol/totalPoints));
+		int avgRow =  (int)(Math.round(sumOfWhiteRow/totalPoints));
+		Mat imageout = rgbThresholdOutput;
+		Imgproc.circle(imageout,new Point(avgRow, avgCol),100, new Scalar(0,0,254),10);
+		imageOut.putFrame(imageout);   
+
+		NetworkTableEntry ValueMiddleX = table.getEntry("Middle X");
+		NetworkTableEntry ValueMiddleY = table.getEntry("Middle Y");
+		ValueMiddleX.setDouble(avgCol);
+		ValueMiddleY.setDouble(avgRow);
 
 	}
 
