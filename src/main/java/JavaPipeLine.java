@@ -66,34 +66,33 @@ public class JavaPipeLine implements VisionPipeline {
 		NetworkTableEntry testValue = table.getEntry("TestValue");
 		testValue.setDouble(val++);
 
-		double totalPoints = 0;
-		double sumOfWhiteCol = 0;
-		double sumOfWhiteRow = 0;
+		Mat noneZero = new Mat();
+		Core.findNonZero(rgbThresholdOutput, noneZero);
+		Rect boundingBox = Imgproc.boundingRect(noneZero);
 
-		for(int i = 0; i < rgbThresholdOutput.cols(); i++){
-			for(int j = 0; j < rgbThresholdOutput.rows(); j++){
-				// System.out.print(rgbThresholdOutput.get(j,i));
-				if(rgbThresholdOutput.get(j,i)[0] == 255.0){
-					sumOfWhiteCol += i;
-					sumOfWhiteRow += j;
-					totalPoints++;
-					
-				}
-			}
-		}
-
-		int avgCol = (int)(Math.round(sumOfWhiteCol/totalPoints));
-		int avgRow =  (int)(Math.round(sumOfWhiteRow/totalPoints));
 		Mat imageout = blurOutput;
-		Imgproc.circle(imageout,new Point(avgCol, avgRow),10, new Scalar(0,0,254),2);
+		Imgproc.rectangle(imageout, 
+						  new Point(boundingBox.x, boundingBox.y),
+						  new Point(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height), 
+						  new Scalar(0,0,254),
+						  2);
 		imageOut.putFrame(imageout);   
-		System.out.println("Center Point: Row: " + avgRow + ", Col: " + avgCol);
-
+		double heightRangeCalc = 0;
+		if(boundingBox.width != 0 && boundingBox.height != 0)
+		{
+			double widthRangeCalc = (215*39)/boundingBox.width;
+			heightRangeCalc = (255*17)/boundingBox.height;
+			System.out.println("d1: " + widthRangeCalc + ", d2: " + heightRangeCalc);
+		}
 		// Add center point to the network tables.
-		NetworkTableEntry ValueMiddleX = table.getEntry("Middle X");
-		NetworkTableEntry ValueMiddleY = table.getEntry("Middle Y");
-		ValueMiddleX.setDouble(avgCol);
-		ValueMiddleY.setDouble(avgRow);
+		// NetworkTableEntry ValueMiddleX = table.getEntry("Middle X");
+		// NetworkTableEntry ValueMiddleY = table.getEntry("Middle Y");
+		NetworkTableEntry ValueRange = table.getEntry("Range");
+		// NetworkTableEntry ValueRight = table.getEntry("RightPoint");
+		// NetworkTableEntry ValueLow = table.getEntry("LowPoint");
+		// ValueMiddleX.setDouble(0);
+		// ValueMiddleY.setDouble(0);
+		ValueRange.setDouble(heightRangeCalc);
 
 		// Add lowest point of identified target to network tables.
 
