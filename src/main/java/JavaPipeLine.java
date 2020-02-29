@@ -61,43 +61,43 @@ public class JavaPipeLine implements VisionPipeline {
 		rgbThreshold(rgbThresholdInput, rgbThresholdRed, rgbThresholdGreen, rgbThresholdBlue, rgbThresholdOutput);
 		//imageOut.putFrame(rgbThresholdOutput);   
 		
-		NetworkTableInstance netWorkTable = NetworkTableInstance.getDefault();
-		NetworkTable table = netWorkTable.getTable("Test");
-		NetworkTableEntry testValue = table.getEntry("TestValue");
-		testValue.setDouble(val++);
-
+		// isolate target pixels and get bounding box 
 		Mat noneZero = new Mat();
 		Core.findNonZero(rgbThresholdOutput, noneZero);
 		Rect boundingBox = Imgproc.boundingRect(noneZero);
 
+		// calculate aiming paramaters
+		double range = -1;
+		double centerX = -1;
+		double centerY = -1;
+		if(boundingBox.width != 0 && boundingBox.height != 0)
+		{
+			//double widthRangeCalc = (215*39)/boundingBox.width;
+			double heightRangeCalc = (255*17)/boundingBox.height;
+			range = heightRangeCalc;
+			centerX = boundingBox.x + (boundingBox.width / 2);
+			centerY = boundingBox.y + (boundingBox.height / 2);
+		}
+
+		//update netwrok tables
+		NetworkTableInstance netWorkTable = NetworkTableInstance.getDefault();
+		NetworkTable table = netWorkTable.getTable("Test");
+		NetworkTableEntry centerXEntry = table.getEntry("centerX");
+		NetworkTableEntry centerYEntry = table.getEntry("centerY");
+		NetworkTableEntry rangeEntry = table.getEntry("Range");
+
+		centerXEntry.setDouble(centerX);
+		centerYEntry.setDouble(centerY);
+		rangeEntry.setDouble(range);
+
+		//update output image
 		Mat imageout = blurOutput;
 		Imgproc.rectangle(imageout, 
 						  new Point(boundingBox.x, boundingBox.y),
 						  new Point(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height), 
 						  new Scalar(0,0,254),
 						  2);
-		imageOut.putFrame(imageout);   
-		double heightRangeCalc = 0;
-		if(boundingBox.width != 0 && boundingBox.height != 0)
-		{
-			double widthRangeCalc = (215*39)/boundingBox.width;
-			heightRangeCalc = (255*17)/boundingBox.height;
-			System.out.println("d1: " + widthRangeCalc + ", d2: " + heightRangeCalc);
-		}
-		// Add center point to the network tables.
-		// NetworkTableEntry ValueMiddleX = table.getEntry("Middle X");
-		// NetworkTableEntry ValueMiddleY = table.getEntry("Middle Y");
-		NetworkTableEntry ValueRange = table.getEntry("Range");
-		// NetworkTableEntry ValueRight = table.getEntry("RightPoint");
-		// NetworkTableEntry ValueLow = table.getEntry("LowPoint");
-		// ValueMiddleX.setDouble(0);
-		// ValueMiddleY.setDouble(0);
-		ValueRange.setDouble(heightRangeCalc);
-
-		// Add lowest point of identified target to network tables.
-
-		// Add width/farthest left/farthest right of identified target to network tables.
-
+		imageOut.putFrame(imageout); 
 	}
 
 	/**
