@@ -46,6 +46,14 @@ public class JavaPipeLine implements VisionPipeline {
 	@Override	public void process(Mat source0) {
 		System.out.print("Starting Process.");
 		
+		NetworkTableInstance netWorkTable = NetworkTableInstance.getDefault();
+		// load InputValues
+		NetworkTable inputTable = netWorkTable.getTable("VisionParams");
+		NetworkTableEntry redThresholdValue = inputTable.getEntry("redThreshold");
+		NetworkTableEntry blueThresholdValue = inputTable.getEntry("blueThreshold");
+		NetworkTableEntry greenThresholdValue = inputTable.getEntry("greenThreshold");
+
+
 		// Step Blur0:
 		Mat blurInput = source0;
 		BlurType blurType = BlurType.get("Median Filter");
@@ -54,9 +62,15 @@ public class JavaPipeLine implements VisionPipeline {
 
 		// Step RGB_Threshold0:
 		Mat rgbThresholdInput = blurOutput;
-		double[] rgbThresholdRed = {0.0, 150.56313993174058};
-		double[] rgbThresholdGreen = {238.4892086330935, 255.0};
-		double[] rgbThresholdBlue = {0.0, 255.0};
+		double[] defaultRed = {0.0, 150.56313993174058};
+		double[] rgbThresholdRed = redThresholdValue.getDoubleArray(defaultRed);
+
+		double[] defaultGreen = {238.4892086330935, 255.0};
+		double[] rgbThresholdGreen = greenThresholdValue.getDoubleArray(defaultGreen);
+
+		double[] defaultBlue = {0.0, 255.0};
+		double[] rgbThresholdBlue = blueThresholdValue.getDoubleArray(defaultBlue);
+
 		SmartDashboard.putNumberArray("Red color", rgbThresholdGreen);
 		rgbThreshold(rgbThresholdInput, rgbThresholdRed, rgbThresholdGreen, rgbThresholdBlue, rgbThresholdOutput);
 		//imageOut.putFrame(rgbThresholdOutput);   
@@ -80,7 +94,6 @@ public class JavaPipeLine implements VisionPipeline {
 		}
 
 		//update netwrok tables
-		NetworkTableInstance netWorkTable = NetworkTableInstance.getDefault();
 		NetworkTable table = netWorkTable.getTable("Test");
 		NetworkTableEntry centerXEntry = table.getEntry("centerX");
 		NetworkTableEntry centerYEntry = table.getEntry("centerY");
